@@ -36,35 +36,98 @@ async def process_prompt(request: PromptRequest):
     
     if "error" in result:
         if "429" in result["error"] or "quota" in result["error"].lower():
-            logging.warning("Quota exceeded. Returning mock RC Filter circuit.")
+            logging.warning("Quota exceeded. Generating dynamic mock fallback circuit based on prompt.")
+            prompt_lower = prompt.lower()
+            
+            mock_circuit = {
+                "id": "mock_1",
+                "name": "Generated Circuit (Mock Fallback)",
+                "explanation": "Mock fallback returned due to Gemini API rate limits.",
+                "components": [],
+                "connections": [],
+                "theory": "",
+                "calculations": [],
+                "step_by_step": []
+            }
+
+            if "rlc" in prompt_lower:
+                mock_circuit["name"] = "RLC Circuit (Mock Fallback)"
+                mock_circuit["components"] = [
+                    {"id": "c_v1", "type": "AC Source", "reference": "V1", "value": "10", "unit": "V", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 100, "y": 200}},
+                    {"id": "c_r1", "type": "Resistor", "reference": "R1", "value": "1k", "unit": "Ω", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 250, "y": 100}},
+                    {"id": "c_l1", "type": "Inductor", "reference": "L1", "value": "10", "unit": "mH", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 400, "y": 100}},
+                    {"id": "c_c1", "type": "Capacitor", "reference": "C1", "value": "1", "unit": "µF", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 550, "y": 200}},
+                    {"id": "c_gnd", "type": "Ground", "reference": "GND1", "value": "", "unit": "", "pins": [{"id": "p1"}], "position": {"x": 250, "y": 300}}
+                ]
+                mock_circuit["connections"] = [
+                    {"id": "w1", "sourceComponent": "c_v1", "sourcePin": "p1", "targetComponent": "c_r1", "targetPin": "p1"},
+                    {"id": "w2", "sourceComponent": "c_r1", "sourcePin": "p2", "targetComponent": "c_l1", "targetPin": "p1"},
+                    {"id": "w3", "sourceComponent": "c_l1", "sourcePin": "p2", "targetComponent": "c_c1", "targetPin": "p1"},
+                    {"id": "w4", "sourceComponent": "c_c1", "sourcePin": "p2", "targetComponent": "c_gnd", "targetPin": "p1"},
+                    {"id": "w5", "sourceComponent": "c_gnd", "sourcePin": "p1", "targetComponent": "c_v1", "targetPin": "p2"}
+                ]
+                mock_circuit["theory"] = "This is a series RLC circuit. It exhibits resonance at a specific frequency where inductive and capacitive reactances cancel out."
+            
+            elif "rl" in prompt_lower:
+                mock_circuit["name"] = "RL Circuit (Mock Fallback)"
+                mock_circuit["components"] = [
+                    {"id": "c_v1", "type": "AC Source", "reference": "V1", "value": "10", "unit": "V", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 100, "y": 200}},
+                    {"id": "c_r1", "type": "Resistor", "reference": "R1", "value": "1k", "unit": "Ω", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 250, "y": 100}},
+                    {"id": "c_l1", "type": "Inductor", "reference": "L1", "value": "10", "unit": "mH", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 400, "y": 200}},
+                    {"id": "c_gnd", "type": "Ground", "reference": "GND1", "value": "", "unit": "", "pins": [{"id": "p1"}], "position": {"x": 250, "y": 300}}
+                ]
+                mock_circuit["connections"] = [
+                    {"id": "w1", "sourceComponent": "c_v1", "sourcePin": "p1", "targetComponent": "c_r1", "targetPin": "p1"},
+                    {"id": "w2", "sourceComponent": "c_r1", "sourcePin": "p2", "targetComponent": "c_l1", "targetPin": "p1"},
+                    {"id": "w3", "sourceComponent": "c_l1", "sourcePin": "p2", "targetComponent": "c_gnd", "targetPin": "p1"},
+                    {"id": "w4", "sourceComponent": "c_gnd", "sourcePin": "p1", "targetComponent": "c_v1", "targetPin": "p2"}
+                ]
+                mock_circuit["theory"] = "This is an RL circuit. The inductor opposes changes in current, creating a phase shift between voltage and current."
+            
+            elif "not" in prompt_lower or "inverter" in prompt_lower:
+                mock_circuit["name"] = "Transistor NOT Gate (Mock Fallback)"
+                mock_circuit["components"] = [
+                    {"id": "c_vcc", "type": "DC Source", "reference": "VCC", "value": "5", "unit": "V", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 100, "y": 50}},
+                    {"id": "c_vin", "type": "DC Source", "reference": "VIN", "value": "5", "unit": "V", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 100, "y": 250}},
+                    {"id": "c_rc", "type": "Resistor", "reference": "RC", "value": "1k", "unit": "Ω", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 300, "y": 100}},
+                    {"id": "c_rb", "type": "Resistor", "reference": "RB", "value": "10k", "unit": "Ω", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 200, "y": 250}},
+                    {"id": "c_q1", "type": "Transistor", "reference": "Q1", "value": "2N3904", "unit": "", "pins": [{"id": "p1"}, {"id": "p2"}, {"id": "p3"}], "position": {"x": 300, "y": 250}},
+                    {"id": "c_gnd", "type": "Ground", "reference": "GND1", "value": "", "unit": "", "pins": [{"id": "p1"}], "position": {"x": 300, "y": 350}}
+                ]
+                # Assuming Transistor pins: p1=Collector, p2=Base, p3=Emitter
+                mock_circuit["connections"] = [
+                    {"id": "w1", "sourceComponent": "c_vcc", "sourcePin": "p1", "targetComponent": "c_rc", "targetPin": "p1"},
+                    {"id": "w2", "sourceComponent": "c_rc", "sourcePin": "p2", "targetComponent": "c_q1", "targetPin": "p1"},
+                    {"id": "w3", "sourceComponent": "c_vin", "sourcePin": "p1", "targetComponent": "c_rb", "targetPin": "p1"},
+                    {"id": "w4", "sourceComponent": "c_rb", "sourcePin": "p2", "targetComponent": "c_q1", "targetPin": "p2"},
+                    {"id": "w5", "sourceComponent": "c_q1", "sourcePin": "p3", "targetComponent": "c_gnd", "targetPin": "p1"},
+                    {"id": "w6", "sourceComponent": "c_gnd", "sourcePin": "p1", "targetComponent": "c_vcc", "targetPin": "p2"},
+                    {"id": "w7", "sourceComponent": "c_gnd", "sourcePin": "p1", "targetComponent": "c_vin", "targetPin": "p2"}
+                ]
+                mock_circuit["theory"] = "This is a basic Transistor Inverter (NOT gate). When VIN is HIGH (5V), the transistor turns ON, pulling the output at the collector LOW (~0V). When VIN is LOW (0V), the transistor is OFF, and the output is pulled HIGH to VCC by RC."
+            
+            else:
+                mock_circuit["name"] = "RC Low-Pass Filter (Mock Fallback)"
+                mock_circuit["components"] = [
+                    {"id": "c_v1", "type": "AC Source", "reference": "V1", "value": "10", "unit": "V", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 100, "y": 200}},
+                    {"id": "c_r1", "type": "Resistor", "reference": "R1", "value": "1k", "unit": "Ω", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 250, "y": 100}},
+                    {"id": "c_c1", "type": "Capacitor", "reference": "C1", "value": "1", "unit": "µF", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 400, "y": 200}},
+                    {"id": "c_gnd", "type": "Ground", "reference": "GND1", "value": "", "unit": "", "pins": [{"id": "p1"}], "position": {"x": 250, "y": 300}}
+                ]
+                mock_circuit["connections"] = [
+                    {"id": "w1", "sourceComponent": "c_v1", "sourcePin": "p1", "targetComponent": "c_r1", "targetPin": "p1"},
+                    {"id": "w2", "sourceComponent": "c_r1", "sourcePin": "p2", "targetComponent": "c_c1", "targetPin": "p1"},
+                    {"id": "w3", "sourceComponent": "c_c1", "sourcePin": "p2", "targetComponent": "c_gnd", "targetPin": "p1"},
+                    {"id": "w4", "sourceComponent": "c_gnd", "sourcePin": "p1", "targetComponent": "c_v1", "targetPin": "p2"}
+                ]
+                mock_circuit["theory"] = "This is a Low-Pass RC Filter. High frequency signals are shunted to ground through the capacitor, while low frequency signals pass through."
+                mock_circuit["calculations"] = [
+                    {"description": "Cutoff Frequency", "formula": "f_c = 1 / (2 * π * R * C)", "values": "1 / (2 * 3.14 * 1000 * 0.000001)", "result": "159.15 Hz"}
+                ]
+
             return {
                 "status": "success",
-                "circuit": {
-                    "id": "mock_rc_1",
-                    "name": "RC Low-Pass Filter (Mock Fallback)",
-                    "components": [
-                        {"id": "comp_1", "type": "AC Source", "reference": "V1", "value": "10", "unit": "V", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 100, "y": 200}},
-                        {"id": "comp_2", "type": "Resistor", "reference": "R1", "value": "1k", "unit": "Ω", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 250, "y": 100}},
-                        {"id": "comp_3", "type": "Capacitor", "reference": "C1", "value": "1", "unit": "µF", "pins": [{"id": "p1"}, {"id": "p2"}], "position": {"x": 400, "y": 200}},
-                        {"id": "comp_4", "type": "Ground", "reference": "GND1", "value": "", "unit": "", "pins": [{"id": "p1"}], "position": {"x": 250, "y": 300}}
-                    ],
-                    "connections": [
-                        {"id": "c_1", "sourceComponent": "comp_1", "sourcePin": "p1", "targetComponent": "comp_2", "targetPin": "p1"},
-                        {"id": "c_2", "sourceComponent": "comp_2", "sourcePin": "p2", "targetComponent": "comp_3", "targetPin": "p1"},
-                        {"id": "c_3", "sourceComponent": "comp_3", "sourcePin": "p2", "targetComponent": "comp_4", "targetPin": "p1"},
-                        {"id": "c_4", "sourceComponent": "comp_4", "sourcePin": "p1", "targetComponent": "comp_1", "targetPin": "p2"}
-                    ],
-                    "theory": "This is a Low-Pass RC Filter. High frequency signals are shunted to ground through the capacitor, while low frequency signals pass through.",
-                    "calculations": [
-                        {"description": "Cutoff Frequency", "formula": "f_c = 1 / (2 * π * R * C)", "values": "1 / (2 * 3.14 * 1000 * 0.000001)", "result": "159.15 Hz"}
-                    ],
-                    "step_by_step": [
-                        "Step 1: AC signal originates from V1.",
-                        "Step 2: Signal travels through current-limiting resistor R1.",
-                        "Step 3: Capacitor C1 charges and discharges, attenuating high frequencies."
-                    ],
-                    "explanation": "Mock fallback returned due to Gemini API rate limits."
-                }
+                "circuit": mock_circuit
             }
         return {"status": "error", "message": result["error"]}
 
