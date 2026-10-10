@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AIPayload",
+  "type": "object",
+  "properties": {
+    "clear_canvas": {
+      "type": "boolean",
+      "description": "If true, the canvas will be wiped before placing the new components."
+    },
+    "components_to_add": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            },
+            "required": ["x", "y"]
+          },
+          "data": { "type": "object" }
+        },
+        "required": ["id", "type", "position"]
+      }
+    },
+    "wires_to_route": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source": { "type": "string" },
+          "sourceHandle": { "type": "string" },
+          "target": { "type": "string" },
+          "targetHandle": { "type": "string" },
+          "wireType": { "type": "string" }
+        },
+        "required": ["source", "sourceHandle", "target", "targetHandle"]
+      }
+    }
+  },
+  "required": ["clear_canvas", "components_to_add", "wires_to_route"]
+}
